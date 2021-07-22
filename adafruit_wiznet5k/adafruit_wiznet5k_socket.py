@@ -331,13 +331,22 @@ class socket:
         :param int flags: ignored, present for compatibility.
         :returns: a tuple (bytes, address) where address is a tuple (ip, port)
         """
-        return (
-            self.recv(bufsize),
-            (
-                _the_interface.remote_ip(self.socknum),
-                _the_interface.remote_port(self.socknum),
-            ),
-        )
+        if self._sock_type == SOCK_STREAM:
+            return (
+                self.recv(bufsize),
+                (
+                    _the_interface.remote_ip(self.socknum),
+                    _the_interface.remote_port(self.socknum),
+                ),
+            )
+        else:
+            return (
+                    self.recv(bufsize),
+                    (
+                        wiznet5k.adafruit_wiznet5k.UDP_SOCK["remote_ip"],
+                        wiznet5k.adafruit_wiznet5k.UDP_SOCK["remote_port"],
+                    ),
+                )
 
     def recv_into(self, buf, nbytes=0, flags=0):
         """Reads some bytes from the connected remote address info the provided buffer.
@@ -403,7 +412,12 @@ class socket:
 
     def available(self):
         """Returns how many bytes of data are available to be read from the socket."""
-        return _the_interface.socket_available(self.socknum, self._sock_type)
+        if self._sock_type == SOCK_STREAM:
+            return _the_interface.socket_available_tcp(self.socknum)
+        elif self._sock_type == SOCK_DGRAM:
+            return _the_interface.socket_available_udp(self.socknum)
+        else:
+            raise RuntimeError("Only TCP and UDP sockets are supported")
 
     def settimeout(self, value):
         """Sets socket read timeout.

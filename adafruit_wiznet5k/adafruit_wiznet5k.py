@@ -454,6 +454,7 @@ class WIZNET5K:  # pylint: disable=too-many-public-methods
             print("* UDP Bytes Remaining: ", UDP_SOCK["bytes_remaining"])
         return UDP_SOCK["bytes_remaining"]
 
+
     def socket_available(self, socket_num, sock_type=SNMR_TCP):
         """Returns the amount of bytes to be read from the socket.
 
@@ -468,10 +469,15 @@ class WIZNET5K:  # pylint: disable=too-many-public-methods
             )
         assert socket_num <= self.max_sockets, "Provided socket exceeds max_sockets."
 
-        res = self._get_rx_rcv_size(socket_num)
+        return self._get_rx_rcv_size(socket_num)
 
-        if sock_type == SNMR_TCP:
-            return res
+    def socket_available_tcp(self, socket_num):
+        return self.socket_available(socket_num, SNMR_TCP)
+
+    def socket_available_udp(self, socket_num):
+        if self._debug:
+            print("socket_available_udp() called")
+        res = self.socket_available(socket_num, SNMR_UDP)
         if res > 0:
             if UDP_SOCK["bytes_remaining"]:
                 return UDP_SOCK["bytes_remaining"]
@@ -485,7 +491,7 @@ class WIZNET5K:  # pylint: disable=too-many-public-methods
                 ret = UDP_SOCK["bytes_remaining"]
                 return ret
         return 0
-
+        
     def socket_status(self, socket_num):
         """Returns the socket connection status. Can be: SNSR_SOCK_CLOSED,
         SNSR_SOCK_INIT, SNSR_SOCK_LISTEN, SNSR_SOCK_SYNSENT, SNSR_SOCK_SYNRECV,
